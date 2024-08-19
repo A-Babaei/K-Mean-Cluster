@@ -1,0 +1,74 @@
+clc; clear; close all;
+% A.Babaei
+% Time 12:15 , Date 16/8/2024
+%% K-Mean Cluster
+% Example data (2D points)
+data = [randn(100, 2) + 2; randn(100, 2) - 2; randn(100, 2) + [2 -2]];
+
+% Parameters
+K = 3;
+max_iters = 100;
+
+% Run K-means clustering
+[clusters, centroids] = kmeans_clustering(data, K, max_iters);
+
+% Plotting the result
+figure;
+hold on;
+colors = ['r', 'g', 'b']; % Colors for clusters
+for k = 1:K
+    scatter(data(clusters == k, 1), data(clusters == k, 2), 50, colors(k), 'filled');
+end
+plot(centroids(:,1), centroids(:,2), 'kx', 'MarkerSize', 15, 'LineWidth', 3); % Centroids
+title('K-Means Clustering');
+xlabel('X1');
+ylabel('X2');
+grid on;
+hold off;
+
+%% Function 
+
+function [clusters, centroids] = kmeans_clustering(data, K, max_iters)
+    % K-Means Clustering
+    % Inputs:
+    %   data - NxD matrix where N is the number of points and D is the number of dimensions
+    %   K - Number of clusters
+    %   max_iters - Maximum number of iterations
+    % Outputs:
+    %   clusters - Nx1 vector of cluster assignments
+    %   centroids - KxD matrix of final cluster centroids
+
+    % Step 1: Randomly initialize centroids by selecting K random data points
+    [N, D] = size(data); % Number of data points and dimensions
+    centroids = data(randperm(N, K), :);
+
+    % Initialize variables
+    clusters = zeros(N, 1);
+    old_centroids = centroids;
+    distances = zeros(N, K);
+
+    % Step 2: Iterative optimization (Assignment and Update steps)
+    for iter = 1:max_iters
+        % Assignment step: Compute distances to centroids and assign to closest one
+        for k = 1:K
+            distances(:, k) = sum((data - centroids(k, :)).^2, 2);
+        end
+        [~, clusters] = min(distances, [], 2); % Assign points to nearest centroid
+
+        % Update step: Recalculate centroids
+        for k = 1:K
+            centroids(k, :) = mean(data(clusters == k, :), 1);
+        end
+
+        % Check for convergence (if centroids don't change significantly)
+        if max(max(abs(centroids - old_centroids))) < 1e-6
+            disp(['Converged after ', num2str(iter), ' iterations.']);
+            break;
+        end
+        old_centroids = centroids;
+    end
+
+    if iter == max_iters
+        disp('Reached maximum iterations without full convergence.');
+    end
+end
